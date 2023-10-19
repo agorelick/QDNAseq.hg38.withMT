@@ -12,4 +12,4 @@ biocViews: ExperimentData, OrganismData, Homo_sapiens_Data
 License: GPL
 URL: https://github.com/agorelick/QDNAseq.hg38.withMT
 NeedsCompilation: no
-RoxygenNote: 7.0.2
+RoxygenNote: 7.2.3
