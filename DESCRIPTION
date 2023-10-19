@@ -7,7 +7,7 @@ Author: Aziz Khan (modified by Alex Gorelick)
 Maintainer: Alex Gorelick <agorelick@hms.harvard.edu>
 Description: This package provides QDNAseq bin annotations for the
         human genome build hg38. This is a fork of asntech/QDNAseq.hg38
-Depends: R (>= 3.2.1), QDNAseq
+Depends: R (>= 3.5.0), QDNAseq
 biocViews: ExperimentData, OrganismData, Homo_sapiens_Data
 License: GPL
 URL: https://github.com/agorelick/QDNAseq.hg38.withMT
