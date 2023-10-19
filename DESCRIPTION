@@ -1,16 +1,15 @@
-Package: QDNAseq.hg38
+Package: QDNAseq.hg38.withMT
 Type: Package
-Title: QDNAseq bin annotation for hg38
+Title: QDNAseq bin annotation for hg38 (with MT added)
 Version: 1.0.0
 Date: 2020-09-11
-Author: Aziz Khan
-Maintainer: Aziz Khan <azizk@stanford.edu>
+Author: Aziz Khan (modified by Alex Gorelick)
+Maintainer: Alex Gorelick <agorelick@hms.harvard.edu>
 Description: This package provides QDNAseq bin annotations for the
-        human genome build hg38.
+        human genome build hg38. This is a fork of asntech/QDNAseq.hg38
 Depends: R (>= 3.2.1), QDNAseq
 biocViews: ExperimentData, OrganismData, Homo_sapiens_Data
 License: GPL
-URL: https://github.com/asntech/QDNAseq.hg38
-BugReports: https://github.com/asntech/QDNAseq.hg38/issues
+URL: https://github.com/agorelick/QDNAseq.hg38.withMT
 NeedsCompilation: no
 RoxygenNote: 7.0.2
