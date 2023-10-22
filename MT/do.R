@@ -8,13 +8,13 @@
 
 rm(list=ls())
 library(Biobase)
-library(BSgenome.Hsapiens.UCSC.hg38)
+#library(BSgenome.Hsapiens.UCSC.hg38)
 library(QDNAseq)
 library(future)
 library(data.table)
 
 # set working directory
-setwd('~/lab_repos/QDNAseq.hg38.withMT')
+setwd('~/repos/QDNAseq.hg38.withMT')
 
 ## load chrM sequence
 mt <- read.table('MT/MT.fa',sep='\n',header=T)[[1]]
@@ -28,7 +28,8 @@ mt_dat$chr <- 'MT'
 setkey(mt_dat,'chr','pos','pos2')
 
 
-for (binsize in c(1000, 500, 100, 50, 30, 15, 10, 5, 1)) {
+#for (binsize in c(1000, 500, 100, 50, 30, 15, 10, 5, 1)) {
+for (binsize in c(1)) {
     message(binsize)
     starts <- seq(1, mt_len, by=binsize*1000)
     ends <- c(tail(starts, -1) - 1, mt_len)
@@ -59,13 +60,22 @@ for (binsize in c(1000, 500, 100, 50, 30, 15, 10, 5, 1)) {
                                         bigWigAverageOverBed="bigWigAverageOverBed")
     res$mappability <- mappability
 
+    ## duplicate rows for chr=M as well as MT
+    resM <- as.data.table(res)
+    resM[,chromosome:='M']
+    resM[,region:=paste0(chromosome,':',start,'-',end)] 
+    resM <- as.data.frame(resM)
+    rownames(resM) <- resM$region
+    resM$region <- NULL
+    res <- rbind(res, resM)
+
     ## load the rdata object for the given binsize
     rda_file <- paste0('MT/rda_orig/hg38.',binsize,'kbp.SR50.rda')
     load(rda_file)
     obj <- eval(parse(text=paste0('hg38.',binsize,'kbp.SR50')))
     bins <- obj@data
     res <- res[,names(bins)]
-    res$residual <- median(bins$residual, na.rm=T) ## impute this to the median across the non-MT bins
+    #res$residual <- median(bins$residual, na.rm=T) ## impute this to the median across the non-MT bins
     bins <- rbind(bins, res)
 
     bins <- AnnotatedDataFrame(bins,
