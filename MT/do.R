@@ -39,7 +39,7 @@ y_dat$chr <- 'Y'
 setkey(y_dat,'chr','pos','pos2')
 
 
-for (binsize in c(500, 100)) { #1000, 50, 30, 15, 10, 5, 1)) {
+for (binsize in c(1000, 500, 100)) { #1000, 50, 30, 15, 10, 5, 1)) {
     message(binsize)
 
     bin_chr <- function(binsize, dat, len, label) {
@@ -102,6 +102,8 @@ for (binsize in c(500, 100)) { #1000, 50, 30, 15, 10, 5, 1)) {
     bins <- bins[!bins$chromosome %in% c('Y','M','MT'),]
     bins <- rbind(bins, res)
     bins$residual[is.nan(bins$residual)] <- NA
+    bins$gc[is.nan(bins$gc)] <- NA
+
 
     bins <- AnnotatedDataFrame(bins,
         varMetadata=data.frame(labelDescription=c(
