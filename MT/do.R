@@ -14,7 +14,7 @@ library(future)
 library(data.table)
 
 # set working directory
-setwd('~/lab_repos/QDNAseq.hg38.withMT')
+setwd('/home/alg2264/repos/QDNAseq.hg38.withMT')
 
 ## load chrM sequence
 mt <- read.table('MT/MT.fa',sep='\n',header=T)[[1]]
@@ -76,11 +76,16 @@ for (binsize in c(1000, 500, 100)) { #1000, 50, 30, 15, 10, 5, 1)) {
         res <- as.data.frame(res)
         rownames(res) <- res$region
         res$region <- NULL
+
         ## calculate average mappability for MT
         mappability <- calculateMappability(res,
                                             bigWigFile=bw_file,
                                             bigWigAverageOverBed="bigWigAverageOverBed")
         res$mappability <- mappability
+
+        ## add mappability
+        res$blacklist <- calculateBlacklist(res, bedFiles="MT/hg38-blacklist.v2.bed")
+
         res
     }
     y_res2 <- add_mappability(y_res, 'MT/chrY_mappability.genmap.50mer.bigwig')
