@@ -14,7 +14,7 @@ library(future)
 library(data.table)
 
 # set working directory
-setwd('~/lab_repos/QDNAseq.hg38.withMT')
+setwd('~/lab_repos/QDNAseq.hg38.MT')
 
 ## load chrM sequence
 mt <- read.table('MT/MT.fa',sep='\n',header=T)[[1]]
@@ -131,26 +131,26 @@ for (binsize in c(1000, 500, 100)) { #1000, 50, 30, 15, 10, 5, 1)) {
                         author="Aziz Khan, modified by Alex Gorelick",
                         date=Sys.time(),
                         organism='Hsapiens',
-                        build='hg38',
+                        build='hg38.MT',
                         version=packageVersion("QDNAseq"),
-                        url=paste0("https://github.com/agorelick/QDNAseq.hg38.withMT/tree/main/data/hg38.",binsize,"kbp.SR50.rda"),
+                        url=paste0("https://github.com/agorelick/QDNAseq.hg38.withMT/tree/main/data/hg38.MT.",binsize,"kbp.SR50.rda"),
                         md5=digest::digest(bins@data),
                         sessionInfo=sessionInfo())
 
     attr(bins, "QDNAseq") <- QDNAseqInfo
    
     ## hacky solution to save the rda object with the expected name format e.g. hg38.1000kbp.SR50
-    eval(parse(text=paste0('hg38.',binsize,'kbp.SR50 <- bins'))) 
-    save(list=paste0('hg38.',binsize,'kbp.SR50'), file=paste0("data/hg38.", binsize, "kbp.SR50.rda"), compress='xz')
+    eval(parse(text=paste0('hg38.MT.',binsize,'kbp.SR50 <- bins'))) 
+    save(list=paste0('hg38.MT.',binsize,'kbp.SR50'), file=paste0("data/hg38.MT.", binsize, "kbp.SR50.rda"), compress='xz')
 }
 
 
-rm(list=ls())
-load('data/hg38.1000kbp.SR50.rda')
-qc <- as.data.table(hg38.1000kbp.SR50@data)
-qc[chromosome=='Y']
-qc[start <= 2000001 & chromosome=='Y',]
-qc[chromosome=='MT',]
+#rm(list=ls())
+#load('data/hg38.1000kbp.SR50.rda')
+#qc <- as.data.table(hg38.1000kbp.SR50@data)
+#qc[chromosome=='Y']
+#qc[start <= 2000001 & chromosome=='Y',]
+#qc[chromosome=='MT',]
 
 ## after installing the package, try these commands. rowNames should include MT bins
 #library(QDNAseq)
