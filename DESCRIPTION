@@ -12,4 +12,31 @@ biocViews: ExperimentData, OrganismData, Homo_sapiens_Data
 License: GPL
 URL: https://github.com/agorelick/QDNAseq.hg38.withMT
 NeedsCompilation: no
-RoxygenNote: 7.2.3
+Imports:
+    graphics,
+    methods,
+    stats,
+    utils,
+    Biobase (>= 2.18.0),
+    CGHbase (>= 1.18.0),
+    CGHcall (>= 2.18.0),
+    DNAcopy (>= 1.32.0),
+    GenomicRanges (>= 1.20),
+    IRanges (>= 2.2),
+    matrixStats (>= 0.60.0),
+    R.utils (>= 2.9.0),
+    Rsamtools (>= 1.20),
+    future.apply (>= 1.8.1)
+Suggests:
+    BiocStyle (>= 1.8.0),
+    BSgenome (>= 1.38.0),
+    digest (>= 0.6.20),
+    GenomeInfoDb (>= 1.6.0),
+    future (>= 1.22.1),
+    parallelly (>= 1.28.1),
+    R.cache (>= 0.13.0),
+    QDNAseq.hg38.MT,
+    QDNAseq.hg19,
+    QDNAseq.mm10
+
+
