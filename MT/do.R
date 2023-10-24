@@ -14,7 +14,7 @@ library(future)
 library(data.table)
 
 # set working directory
-setwd('/home/alg2264/repos/QDNAseq.hg38.withMT')
+setwd('~/lab_repos/QDNAseq.hg38.withMT')
 
 ## load chrM sequence
 mt <- read.table('MT/MT.fa',sep='\n',header=T)[[1]]
@@ -65,33 +65,35 @@ for (binsize in c(1000, 500, 100)) { #1000, 50, 30, 15, 10, 5, 1)) {
     }
     mt_res <- mt_dat_binned[,summarize_bin(.SD), by=c('chr','start','end','region')]
     setnames(mt_res,'chr','chromosome')
-    mt_res[bases==0, use:=F]
+    #mt_res[bases==0, use:=F]
 
     y_res <- y_dat_binned[,summarize_bin(.SD), by=c('chr','start','end','region')]
     setnames(y_res,'chr','chromosome')
-    y_res[bases==0, use:=F]
+    #y_res[bases==0, use:=F]
 
-    add_mappability <- function(res, bw_file) {
+    add_mappability <- function(res, map_file, blacklist_file) {
         res[,region:=paste0(chromosome,':',start,'-',end)] 
         res <- as.data.frame(res)
         rownames(res) <- res$region
         res$region <- NULL
 
         ## calculate average mappability for MT
-        mappability <- calculateMappability(res,
-                                            bigWigFile=bw_file,
-                                            bigWigAverageOverBed="bigWigAverageOverBed")
+        mappability <- calculateMappability(res, bigWigFile=map_file, bigWigAverageOverBed="bigWigAverageOverBed")
         res$mappability <- mappability
 
-        ## add mappability
-        res$blacklist <- calculateBlacklist(res, bedFiles="MT/hg38-blacklist.v2.bed")
+        ## add blacklist
+        if(!is.null(blacklist_file)) {
+            res$blacklist <- calculateBlacklist(res, bedFiles=blacklist_file)
+        } else {
+            res$blacklist <- 0
+        }
 
         res
     }
-    y_res2 <- add_mappability(y_res, 'MT/chrY_mappability.genmap.50mer.bigwig')
+    y_res2 <- add_mappability(y_res, map_file='MT/chrY_mappability.genmap.50mer.bigwig', blacklist_file="MT/hg38-blacklist.v2.bed")
 
     ## duplicate chrM for compatibility with GRCh38 and hg38
-    mt_res2.1 <- add_mappability(mt_res, 'MT/MT_mappability.genmap.50mer.bigwig')
+    mt_res2.1 <- add_mappability(mt_res, 'MT/MT_mappability.genmap.50mer.bigwig', blacklist_file=NULL)
     mt_res2.2 <- copy(mt_res2.1)
     mt_res2.2$chromosome <- 'M'
     rownames(mt_res2.2) <- paste0(mt_res2.2$chromosome,':',mt_res2.2$start,'-',mt_res2.2$end)
