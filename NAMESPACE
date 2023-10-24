@@ -1,3 +1,2 @@
-exportPattern("^[[:alpha:]]+")
+export("binReadCounts_withMT")
 
-import(QDNAseq)

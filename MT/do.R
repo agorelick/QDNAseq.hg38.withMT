@@ -93,11 +93,13 @@ for (binsize in c(1000, 500, 100)) { #1000, 50, 30, 15, 10, 5, 1)) {
     y_res2 <- add_mappability(y_res, map_file='MT/chrY_mappability.genmap.50mer.bigwig', blacklist_file="MT/hg38-blacklist.v2.bed")
 
     ## duplicate chrM for compatibility with GRCh38 and hg38
-    mt_res2.1 <- add_mappability(mt_res, 'MT/MT_mappability.genmap.50mer.bigwig', blacklist_file=NULL)
-    mt_res2.2 <- copy(mt_res2.1)
-    mt_res2.2$chromosome <- 'M'
-    rownames(mt_res2.2) <- paste0(mt_res2.2$chromosome,':',mt_res2.2$start,'-',mt_res2.2$end)
-    mt_res2 <- rbind(mt_res2.2, mt_res2.1)
+    mt_res2 <- add_mappability(mt_res, 'MT/MT_mappability.genmap.50mer.bigwig', blacklist_file=NULL)
+
+    # this causes too many problems
+    #mt_res2.2 <- copy(mt_res2.1)
+    #mt_res2.2$chromosome <- 'M'
+    #rownames(mt_res2.2) <- paste0(mt_res2.2$chromosome,':',mt_res2.2$start,'-',mt_res2.2$end)
+    #mt_res2 <- rbind(mt_res2.2, mt_res2.1)
     res <- rbind(y_res2, mt_res2)    
 
     ## load the rdata object for the given binsize
@@ -106,7 +108,7 @@ for (binsize in c(1000, 500, 100)) { #1000, 50, 30, 15, 10, 5, 1)) {
     obj <- eval(parse(text=paste0('hg38.',binsize,'kbp.SR50')))
     bins <- obj@data
     res <- res[,names(bins)]
-    bins <- bins[!bins$chromosome %in% c('Y','M','MT'),]
+    bins <- bins[!bins$chromosome %in% c('Y','MT'),]
     bins <- rbind(bins, res)
     bins$residual[is.nan(bins$residual)] <- NA
     bins$gc[is.nan(bins$gc)] <- NA
@@ -143,9 +145,12 @@ for (binsize in c(1000, 500, 100)) { #1000, 50, 30, 15, 10, 5, 1)) {
 }
 
 
-#rm(list=ls())
-#load('data/hg38.500kbp.SR50.rda')
-#qc <- as.data.table(hg38.500kbp.SR50@data)
+rm(list=ls())
+load('data/hg38.1000kbp.SR50.rda')
+qc <- as.data.table(hg38.1000kbp.SR50@data)
+qc[chromosome=='Y']
+qc[start <= 2000001 & chromosome=='Y',]
+qc[chromosome=='MT',]
 
 ## after installing the package, try these commands. rowNames should include MT bins
 #library(QDNAseq)
