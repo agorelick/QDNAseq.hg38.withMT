@@ -8,13 +8,13 @@
 
 rm(list=ls())
 library(Biobase)
-#library(BSgenome.Hsapiens.UCSC.hg38)
+library(BSgenome.Hsapiens.UCSC.hg38)
 library(QDNAseq)
 library(future)
 library(data.table)
 
 # set working directory
-setwd('~/repos/QDNAseq.hg38.withMT')
+setwd('~/lab_repos/QDNAseq.hg38.withMT')
 
 ## load chrM sequence
 mt <- read.table('MT/MT.fa',sep='\n',header=T)[[1]]
@@ -27,17 +27,33 @@ mt_dat[,pos2:=pos+1]
 mt_dat$chr <- 'MT'
 setkey(mt_dat,'chr','pos','pos2')
 
+## load chrY
+y <- read.table('MT/chrY.fa',sep='\n',header=T)[[1]]
+y <- paste(y, collapse='')
+y_chr <- strsplit(y,'')[[1]]
+y_len <- length(y_chr)
+y_dat <- data.table(nt=y_chr)
+y_dat$pos <- 1:nrow(y_dat)
+y_dat[,pos2:=pos+1]
+y_dat$chr <- 'Y'
+setkey(y_dat,'chr','pos','pos2')
 
-#for (binsize in c(1000, 500, 100, 50, 30, 15, 10, 5, 1)) {
-for (binsize in c(1)) {
+
+for (binsize in c(500, 100)) { #1000, 50, 30, 15, 10, 5, 1)) {
     message(binsize)
-    starts <- seq(1, mt_len, by=binsize*1000)
-    ends <- c(tail(starts, -1) - 1, mt_len)
-    Mbins <- data.table(chr='MT', start=starts, end=ends)
-    Mbins[,region:=paste0(chr,':',start,'-',end)]
-    setkey(Mbins,'chr','start','end')
-    mt_dat_binned <- foverlaps(mt_dat, Mbins, type='any')
-    mt_dat_binned <- mt_dat_binned[!duplicated(pos),]
+
+    bin_chr <- function(binsize, dat, len, label) {
+        starts <- seq(1, len, by=binsize*1000)
+        ends <- c(tail(starts, -1) - 1, len)
+        bins <- data.table(chr=label, start=starts, end=ends)
+        bins[,region:=paste0(chr,':',start,'-',end)]
+        setkey(bins,'chr','start','end')
+        dat_binned <- foverlaps(dat, bins, type='any')
+        dat_binned <- dat_binned[!duplicated(pos),]
+        dat_binned
+    }
+    mt_dat_binned <- bin_chr(binsize, mt_dat, mt_len, 'MT')
+    y_dat_binned <- bin_chr(binsize, y_dat, y_len, 'Y')
 
     summarize_bin <- function(mt_dat_binned) { 
         len <- nrow(mt_dat_binned)
@@ -45,29 +61,37 @@ for (binsize in c(1)) {
         bases <- round((nonN_bases / len)*100, 4)
         n_gc <- sum(toupper(mt_dat_binned$nt) %in% c('C','G'))
         gc <- round((n_gc / nonN_bases)*100,5)
-        data.table(bases=bases, gc=gc, blacklist=0, residual=NaN, use=T, len=len)
+        data.table(bases=bases, gc=gc, blacklist=0, residual=NA, use=F, len=len)
     }
-    res <- mt_dat_binned[,summarize_bin(.SD), by=c('chr','start','end','region')]
-    setnames(res,'chr','chromosome')
-    res[,region:=paste0(chromosome,':',start,'-',end)] 
-    res <- as.data.frame(res)
-    rownames(res) <- res$region
-    res$region <- NULL
+    mt_res <- mt_dat_binned[,summarize_bin(.SD), by=c('chr','start','end','region')]
+    setnames(mt_res,'chr','chromosome')
+    mt_res[bases==0, use:=F]
 
-    ## calculate average mappability for MT
-    mappability <- calculateMappability(res,
-                                        bigWigFile="MT/MT_mappability.genmap.50mer.bigwig",
-                                        bigWigAverageOverBed="bigWigAverageOverBed")
-    res$mappability <- mappability
+    y_res <- y_dat_binned[,summarize_bin(.SD), by=c('chr','start','end','region')]
+    setnames(y_res,'chr','chromosome')
+    y_res[bases==0, use:=F]
 
-    ## duplicate rows for chr=M as well as MT
-    resM <- as.data.table(res)
-    resM[,chromosome:='M']
-    resM[,region:=paste0(chromosome,':',start,'-',end)] 
-    resM <- as.data.frame(resM)
-    rownames(resM) <- resM$region
-    resM$region <- NULL
-    res <- rbind(res, resM)
+    add_mappability <- function(res, bw_file) {
+        res[,region:=paste0(chromosome,':',start,'-',end)] 
+        res <- as.data.frame(res)
+        rownames(res) <- res$region
+        res$region <- NULL
+        ## calculate average mappability for MT
+        mappability <- calculateMappability(res,
+                                            bigWigFile=bw_file,
+                                            bigWigAverageOverBed="bigWigAverageOverBed")
+        res$mappability <- mappability
+        res
+    }
+    y_res2 <- add_mappability(y_res, 'MT/chrY_mappability.genmap.50mer.bigwig')
+
+    ## duplicate chrM for compatibility with GRCh38 and hg38
+    mt_res2.1 <- add_mappability(mt_res, 'MT/MT_mappability.genmap.50mer.bigwig')
+    mt_res2.2 <- copy(mt_res2.1)
+    mt_res2.2$chromosome <- 'M'
+    rownames(mt_res2.2) <- paste0(mt_res2.2$chromosome,':',mt_res2.2$start,'-',mt_res2.2$end)
+    mt_res2 <- rbind(mt_res2.2, mt_res2.1)
+    res <- rbind(y_res2, mt_res2)    
 
     ## load the rdata object for the given binsize
     rda_file <- paste0('MT/rda_orig/hg38.',binsize,'kbp.SR50.rda')
@@ -75,8 +99,9 @@ for (binsize in c(1)) {
     obj <- eval(parse(text=paste0('hg38.',binsize,'kbp.SR50')))
     bins <- obj@data
     res <- res[,names(bins)]
-    #res$residual <- median(bins$residual, na.rm=T) ## impute this to the median across the non-MT bins
+    bins <- bins[!bins$chromosome %in% c('Y','M','MT'),]
     bins <- rbind(bins, res)
+    bins$residual[is.nan(bins$residual)] <- NA
 
     bins <- AnnotatedDataFrame(bins,
         varMetadata=data.frame(labelDescription=c(
@@ -109,11 +134,14 @@ for (binsize in c(1)) {
 }
 
 
+#rm(list=ls())
+#load('data/hg38.500kbp.SR50.rda')
+#qc <- as.data.table(hg38.500kbp.SR50@data)
+
 ## after installing the package, try these commands. rowNames should include MT bins
-library(QDNAseq)
-library(QDNAseq.hg38)
-bins <- getBinAnnotations(binSize=50, genome="hg38")
-
-
+#library(QDNAseq)
+#library(QDNAseq.hg38)
+#bins <- getBinAnnotations(binSize=50, genome="hg19")
+#qc <- as.data.table(bins@data)
 
 
